@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String        @id @default(uuid())
+  username    String        @unique
+  name        String
+  email       String        @unique
+  password    String
+  quizzes     Quiz[]
+  play        Play[]
+  Leaderboard Leaderboard[]
+}
+
+model Field {
+  id         String   @id @unique
+  name       String
+  type       String
+  value      String
+  isCorrect  Boolean?
+  image      String?
+  question   Question @relation("QuestionFields", fields: [questionId], references: [id])
+  questionId String
+}
+
+model Question {
+  id        String  @id @unique
+  name      String
+  image     String?
+  type      String
+  tooltip   String?
+  maxPoints String
+  quiz      Quiz    @relation(fields: [quizId], references: [id])
+  quizId    String
+  fields    Field[] @relation("QuestionFields")
+}
+
+model Quiz {
+  id          String        @id @unique @default(uuid())
+  title       String
+  description String
+  duration    Int
+  image       String
+  endDate     DateTime?
+  bonusesList Json?
+  questions   Question[]
+  authorId    String
+  author      User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt   DateTime      @default(now())
+  private     Boolean
+  active      Boolean       @default(true)
+  allowed     Json?
+  play        Play[]
+  Leaderboard Leaderboard[]
+}
+
+model Play {
+  id       String  @id @unique @default(uuid())
+  quiz     Quiz    @relation(fields: [quizId], references: [id])
+  quizId   String
+  authorId String
+  author   User    @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  process  Json[]
+  points   Int     @default(0)
+  time     Int?
+  finished Boolean @default(false)
+}
+
+model Leaderboard {
+  id          String @id @unique @default(uuid())
+  quiz        Quiz   @relation(fields: [quizId], references: [id])
+  quizId      String
+  authorId    String
+  author      User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  points      Int
+  bonus       Int?   @default(0)
+  attempts    Int
+}
